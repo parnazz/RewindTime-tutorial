@@ -11,7 +11,8 @@ public class MovingCube : MonoBehaviour
     private int _caseSwitch = 0;
     private TimeBody _timeBody;
 
-    private bool _isSwitched = false;
+    private bool _isSwitchedA = false;
+    private bool _isSwitchedB = false;
     private bool _isSwitchedRewind = false;
 
     // Start is called before the first frame update
@@ -21,7 +22,7 @@ public class MovingCube : MonoBehaviour
     }
 
     // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
         switch (_caseSwitch)
         {
@@ -32,52 +33,73 @@ public class MovingCube : MonoBehaviour
                 transform.Translate(Vector3.left * 10f * Time.fixedDeltaTime);
                 break;
         }
-       
-        if (transform.position.x >= _pointA.position.x)
-        {
-            if (!_isSwitched)
-            {
-                _caseSwitch -= 1;
-                _caseSwitch = Mathf.Abs(_caseSwitch);
-                _isSwitched = true;
-            }
-        }
-        else if (transform.position.x <= _pointB.position.x)
-        {
-            if (_isSwitched)
-            {
-                _caseSwitch -= 1;
-                _caseSwitch = Mathf.Abs(_caseSwitch);
-                _isSwitched = false;
-            }
-        }
 
-        if (_timeBody.isRewinding && transform.position.x >= (_pointA.position.x - 0.1f))
+        MoveCube();
+
+        RewindCheck();
+    }
+
+    // Метод неодходим для того, чтобы не происходило регистрации 
+    // прохождения точки А/Б при перемотке времени.
+    IEnumerator SwitchRewindRoutine()
+    {
+        yield return new WaitUntil(() => !_timeBody.isRewinding);
+        _isSwitchedA = false;
+        _isSwitchedB = false;
+        _isSwitchedRewind = false;
+    }
+
+    // При перемотке времени фиксируем факт прохождения через точку А/Б
+    // и меняем значение переменной _caseSwitch на противоположное.
+    // Так получаем логичную петлю во времени.
+    private void RewindCheck()
+    {
+        // Небольшой оффсет при проверках нужен, так как почему-то при 
+        // оригинальном значении x не регистрируется факт прохождения
+        // через точку А/Б при перемотке времени.
+        if (_timeBody.isRewinding && transform.position.x >= (_pointA.position.x - 0.05f))
         {
             if (!_isSwitchedRewind)
             {
                 _isSwitchedRewind = true;
                 _caseSwitch -= 1;
                 _caseSwitch = Mathf.Abs(_caseSwitch);
-                StartCoroutine(Routine());
+                StartCoroutine(SwitchRewindRoutine());
             }
         }
-        else if (_timeBody.isRewinding && transform.position.x <= (_pointB.position.x + 0.1f))
+        else if (_timeBody.isRewinding && transform.position.x <= (_pointB.position.x + 0.05f))
         {
             if (!_isSwitchedRewind)
             {
                 _isSwitchedRewind = true;
                 _caseSwitch -= 1;
                 _caseSwitch = Mathf.Abs(_caseSwitch);
-                StartCoroutine(Routine());
+                StartCoroutine(SwitchRewindRoutine());
             }
         }
     }
 
-    IEnumerator Routine()
+    private void MoveCube()
     {
-        yield return new WaitUntil(() => !_timeBody.isRewinding);
-        _isSwitched = false;
-        _isSwitchedRewind = false;
+        if (transform.position.x >= _pointA.position.x)
+        {
+            if (!_isSwitchedA)
+            {
+                _caseSwitch -= 1;
+                _caseSwitch = Mathf.Abs(_caseSwitch);
+                _isSwitchedA = true;
+                _isSwitchedB = false;
+            }
+        }
+        else if (transform.position.x <= _pointB.position.x)
+        {
+            if (!_isSwitchedB)
+            {
+                _caseSwitch -= 1;
+                _caseSwitch = Mathf.Abs(_caseSwitch);
+                _isSwitchedB = true;
+                _isSwitchedA = false;
+            }
+        }
     }
 }
