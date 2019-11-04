@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class TimeBody : MonoBehaviour
 {
@@ -70,12 +71,18 @@ public class TimeBody : MonoBehaviour
     public void StartRewinding()
     {
         isRewinding = true;
-        _rb.isKinematic = true;
+        if (_rb != null)
+        {
+            _rb.isKinematic = true;
+        }
     }
 
     public void StopRewinding()
     {
         isRewinding = false;
-        _rb.isKinematic = false;
+        if (_rb != null)
+        {
+            _rb.isKinematic = false;
+        }
     }
 }
